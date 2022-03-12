@@ -382,6 +382,12 @@ private fun MainPreview() {
     MaterialTheme(
         colors = darkColors(primary = Color.Cyan)
     ) {
+        Image(
+            modifier = Modifier.fillMaxSize(),
+            painter = painterResource(id = R.drawable.main_background),
+            contentDescription = null,
+            contentScale = ContentScale.FillBounds
+        )
         MainScreen(
             downloadingFiles = states,
             onDownloadClick = { },

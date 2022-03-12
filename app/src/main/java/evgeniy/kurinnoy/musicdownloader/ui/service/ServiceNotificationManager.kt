@@ -53,6 +53,10 @@ class ServiceNotificationManager(
 
         showedNotificationIds.clear()
         showedNotificationIds.addAll(notificationIds)
+
+        if (showedNotificationIds.isEmpty()) {
+            notificationManager.cancel(R.id.notification_id)
+        }
     }
 
     fun createNotificationChannel() {
