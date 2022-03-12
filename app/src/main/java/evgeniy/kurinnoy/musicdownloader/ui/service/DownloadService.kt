@@ -10,10 +10,7 @@ import evgeniy.kurinnoy.musicdownloader.domain.MusicDownloadManager
 import evgeniy.kurinnoy.musicdownloader.domain.models.MusicDownloadingState
 import evgeniy.kurinnoy.musicdownloader.utils.LocalServiceBinder
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.*
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -31,7 +28,6 @@ class DownloadService: Service() {
 
     @Inject
     lateinit var downloadManager: MusicDownloadManager
-
 
     private val _error = MutableSharedFlow<Throwable>()
     val error = _error.asSharedFlow()
@@ -77,7 +73,8 @@ class DownloadService: Service() {
         }
     }
 
-    private fun onLoadingUpdate(list: List<MusicDownloadingState>) {
+    private suspend fun onLoadingUpdate(list: List<MusicDownloadingState>) {
+        Log.i("DownloadService", "onLoadingUpdate: ${list.joinToString()}")
         serviceNotificationManager.updateNotifications(list)
     }
 

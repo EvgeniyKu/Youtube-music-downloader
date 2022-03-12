@@ -8,11 +8,11 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import dagger.hilt.android.qualifiers.ApplicationContext
 import evgeniy.kurinnoy.musicdownloader.R
 import evgeniy.kurinnoy.musicdownloader.domain.models.MusicDownloadingState
 import evgeniy.kurinnoy.musicdownloader.ui.MainActivity
-import javax.inject.Inject
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 class ServiceNotificationManager(
     private val service: DownloadService
@@ -24,38 +24,42 @@ class ServiceNotificationManager(
 
     private val showedNotificationIds = mutableSetOf<Int>()
 
-    fun updateNotifications(list: List<MusicDownloadingState>) {
-        val hasInProgress = list.any {
-            it is MusicDownloadingState.Pending
-                    || it is MusicDownloadingState.InProgress
-                    || it is MusicDownloadingState.Failure
-        }
+    private val updateMutex = Mutex()
 
-        if (hasInProgress) {
-            val notification = createSummaryNotification()
-            service.startForeground(R.id.notification_id, notification)
-        } else {
-            service.stopForeground(false)
-        }
+    suspend fun updateNotifications(list: List<MusicDownloadingState>) {
+        updateMutex.withLock {
+            val hasInProgress = list.any {
+                it is MusicDownloadingState.Pending
+                        || it is MusicDownloadingState.InProgress
+                        || it is MusicDownloadingState.Failure
+            }
 
-        val notificationIds = mutableSetOf<Int>()
-        list.forEach {
-            val notification = createDownloadNotification(it)
-            val notificationId = R.id.notification_id + it.id.hashCode()
-            notificationIds.add(notificationId)
-            notificationManager.notify(notificationId, notification)
-        }
+            if (hasInProgress) {
+                val notification = createSummaryNotification()
+                service.startForeground(R.id.notification_id, notification)
+            } else {
+                service.stopForeground(false)
+            }
 
-        // remove missing notifications
-        showedNotificationIds.subtract(notificationIds).forEach {
-            notificationManager.cancel(it)
-        }
+            val notificationIds = mutableSetOf<Int>()
+            list.forEach {
+                val notification = createDownloadNotification(it)
+                val notificationId = R.id.notification_id + it.id.hashCode()
+                notificationIds.add(notificationId)
+                notificationManager.notify(notificationId, notification)
+            }
 
-        showedNotificationIds.clear()
-        showedNotificationIds.addAll(notificationIds)
+            // remove missing notifications
+            showedNotificationIds.subtract(notificationIds).forEach {
+                notificationManager.cancel(it)
+            }
 
-        if (showedNotificationIds.isEmpty()) {
-            notificationManager.cancel(R.id.notification_id)
+            showedNotificationIds.clear()
+            showedNotificationIds.addAll(notificationIds)
+
+            if (showedNotificationIds.isEmpty()) {
+                notificationManager.cancel(R.id.notification_id)
+            }
         }
     }
 

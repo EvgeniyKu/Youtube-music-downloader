@@ -2,13 +2,15 @@ package evgeniy.kurinnoy.musicdownloader.ui
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.animation.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,7 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -30,7 +31,6 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import com.google.accompanist.insets.ProvideWindowInsets
 import com.google.accompanist.insets.navigationBarsPadding
-import com.google.accompanist.insets.navigationBarsWithImePadding
 import com.google.accompanist.insets.statusBarsPadding
 import dagger.hilt.android.AndroidEntryPoint
 import evgeniy.kurinnoy.musicdownloader.R
@@ -100,8 +100,10 @@ class MainActivity : AppCompatActivity() {
                     exit = fadeOut(),
                 ) {
                     service?.let { service ->
+                        val files = service.downloadManager.downloadingFiles
+                            .collectAsState(emptyList())
                         MainScreen(
-                            downloadingFiles = service.downloadManager.downloadingFiles.collectAsState(),
+                            downloadingFiles = files,
                             onDownloadClick = { service.downloadMusic(it) },
                             onRestart = { service.tryAgain(it) },
                             onCancel = { service.cancel(it.id) },

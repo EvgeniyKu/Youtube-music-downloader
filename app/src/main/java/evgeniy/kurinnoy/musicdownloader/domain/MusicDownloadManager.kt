@@ -15,9 +15,7 @@ import evgeniy.kurinnoy.musicdownloader.domain.models.MusicDownloadingInfo
 import evgeniy.kurinnoy.musicdownloader.domain.models.MusicDownloadingState
 import evgeniy.kurinnoy.musicdownloader.utils.extension.copyTo
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.File
@@ -34,8 +32,8 @@ class MusicDownloadManager @Inject constructor(
     private val musicDataProvider: MusicDataProvider,
 ) {
 
-    private val _downloadingFiles = MutableStateFlow<List<MusicDownloadingState>>(emptyList())
-    val downloadingFiles = _downloadingFiles.asStateFlow()
+    private val _downloadingFiles = MutableSharedFlow<List<MusicDownloadingState>>(replay = 1)
+    val downloadingFiles = _downloadingFiles.asSharedFlow()
 
     private val downloadingJobs = Collections.synchronizedMap(mutableMapOf<String, Job>())
 
@@ -103,7 +101,7 @@ class MusicDownloadManager @Inject constructor(
         updateStateMutex.withLock {
             val allStates = _downloadingFiles.value.toMutableList()
             allStates.removeIf { it.id == id }
-            _downloadingFiles.value = allStates
+            _downloadingFiles.emit(allStates)
         }
         downloadingJobs.remove(id)
     }
@@ -139,9 +137,12 @@ class MusicDownloadManager @Inject constructor(
             } else {
                 allStates[currentStateIndex] = update(currentState)
             }
-            _downloadingFiles.value = allStates
+            _downloadingFiles.emit(allStates)
         }
     }
+
+    private val SharedFlow<List<MusicDownloadingState>>.value: List<MusicDownloadingState>
+        get() = replayCache.lastOrNull() ?: emptyList()
 
     private inner class SingleSongDownloader(
         private val url: String,
