@@ -1,0 +1,69 @@
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+    </style>
+
+<!--    <style name="FilePickerTheme" parent="NNF_BaseTheme">-->
+<!--        &lt;!&ndash; Set these to match your theme &ndash;&gt;-->
+<!--        <item name="colorPrimary">@color/colorPrimary</item>-->
+<!--        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>-->
+<!--        <item name="colorAccent">@color/colorAccent</item>-->
+<!--        <item name="android:background">@color/colorPrimaryDark</item>-->
+
+<!--        &lt;!&ndash; Setting a divider is entirely optional &ndash;&gt;-->
+<!--        <item name="nnf_list_item_divider">?android:attr/listDivider</item>-->
+
+<!--        &lt;!&ndash; Need to set this also to style create folder dialog &ndash;&gt;-->
+<!--        <item name="alertDialogTheme">@style/FilePickerAlertDialogTheme</item>-->
+
+<!--        &lt;!&ndash; If you want to set a specific toolbar theme, do it here &ndash;&gt;-->
+<!--        &lt;!&ndash; <item name="nnf_toolbarTheme">@style/ThemeOverlay.AppCompat.Dark.ActionBar</item> &ndash;&gt;-->
+<!--    </style>-->
+
+    <style name="FilePickerAlertDialogTheme" parent="Theme.AppCompat.Dialog.Alert">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+    </style>
+
+
+    <style name="button" parent="Base.Widget.AppCompat.Button.Colored">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:paddingTop">0dp</item>
+        <item name="android:paddingBottom">0dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+    </style>
+
+    <style name="textInput">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:textAlignment">center</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textColorHint">@color/white</item>
+        <item name="android:background">@android:color/transparent</item>
+        <item name="android:layout_marginTop">0dp</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:focusableInTouchMode">true</item>
+        <item name="android:isScrollContainer">false</item>
+        <item name="android:textSize">16sp</item>
+    </style>
+
+    <style name="MyAlertDialogStyle" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <!-- Used for the buttons -->
+        <item name="colorAccent">@color/colorAccent</item>
+        <!-- Used for the title and text -->
+        <item name="android:textColorPrimary">@color/white</item>
+        <!-- Used for the background -->
+        <item name="android:background">@color/colorPrimaryDark</item>
+    </style>
+
+</resources>
