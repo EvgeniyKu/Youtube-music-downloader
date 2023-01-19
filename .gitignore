@@ -1,5 +1,12 @@
 *.iml
 .gradle
+build/*
+!build/outputs
+build/outputs/*
+!build/outputs/apk
+build/outputs/apk/*
+!build/outputs/apk/debug
+
 /local.properties
 /.idea/caches
 /.idea/libraries
@@ -8,7 +15,6 @@
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
 .DS_Store
-/build
 /captures
 .externalNativeBuild
 .cxx

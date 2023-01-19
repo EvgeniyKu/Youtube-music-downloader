@@ -4,26 +4,16 @@ import com.github.kiulian.downloader.YoutubeDownloader
 import com.github.kiulian.downloader.downloader.YoutubeCallback
 import com.github.kiulian.downloader.downloader.request.RequestVideoInfo
 import com.github.kiulian.downloader.model.videos.VideoInfo
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
+import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-suspend fun YoutubeDownloader.getVideoInfo(videoId: String): VideoInfo {
-    return suspendCancellableCoroutine<VideoInfo> { continuation ->
+suspend fun YoutubeDownloader.getVideoInfo(videoId: String): VideoInfo? {
+    return withContext(Dispatchers.IO) {
         val request = RequestVideoInfo(videoId)
-            .callback(object: YoutubeCallback<VideoInfo> {
-                override fun onFinished(data: VideoInfo) {
-                    continuation.resume(data)
-                }
-
-                override fun onError(throwable: Throwable) {
-                    continuation.resumeWithException(throwable)
-                }
-            })
-
-        val response = getVideoInfo(request)
-        continuation.invokeOnCancellation {
-            response.cancel()
-        }
+        getVideoInfo(request).data(10, TimeUnit.SECONDS)
     }
 }

@@ -28,4 +28,18 @@ sealed class MusicDownloadingState(
         val throwable: Throwable,
         val url: String,
     ) : InfoState(url)
+
+    fun description(): String {
+        return when(this) {
+            is InfoState -> {
+                val shortInfo = "${info.musicInfo.artist}: ${info.musicInfo.title}"
+                when(this) {
+                    is Completed -> "Successfully downloaded $shortInfo"
+                    is Failure -> "Failed to download $shortInfo. Error: $throwable\n${throwable.stackTraceToString()}"
+                    is InProgress -> "Progress $progress $shortInfo"
+                }
+            }
+            is Pending -> "Pending: $url"
+        }
+    }
 }

@@ -15,6 +15,7 @@ class MusicDataProvider @Inject constructor(
     suspend fun loadVideoInfo(url: String): MusicInfo {
         val id = extractVideoIdFromUrl(url)
         val videoInfo = downloader.getVideoInfo(id)
+            ?: error("Can't extract track info from url $url")
 
         return mapper.mapFrom(videoInfo).also {
             if (it.formats.isEmpty()) {

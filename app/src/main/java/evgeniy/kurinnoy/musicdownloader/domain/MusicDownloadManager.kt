@@ -182,6 +182,7 @@ class MusicDownloadManager @Inject constructor(
         private fun copyFileToExternalStorage(internalFile: File, externalDirectory: Uri) {
 
             val outputDirectory = DocumentFile.fromTreeUri(context, externalDirectory)
+                ?.takeIf { it.exists() && it.canWrite() }
                 ?: throw IOException("Failed to open the directory $externalDirectory")
 
             val outputFile =

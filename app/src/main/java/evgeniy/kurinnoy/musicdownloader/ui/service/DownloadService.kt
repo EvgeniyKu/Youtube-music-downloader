@@ -35,9 +35,10 @@ class DownloadService: Service() {
     override fun onCreate() {
         super.onCreate()
         serviceNotificationManager.createNotificationChannel()
-        downloadManager.downloadingFiles
-            .onEach(::onLoadingUpdate)
-            .launchIn(scope)
+        scope.launch {
+            downloadManager.downloadingFiles
+                .collectLatest(::onLoadingUpdate)
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -74,7 +75,7 @@ class DownloadService: Service() {
     }
 
     private suspend fun onLoadingUpdate(list: List<MusicDownloadingState>) {
-        Log.i("DownloadService", "onLoadingUpdate: ${list.joinToString()}")
+        Log.i("DownloadService", "state updated: ${list.joinToString { it.description() }}")
         serviceNotificationManager.updateNotifications(list)
     }
 

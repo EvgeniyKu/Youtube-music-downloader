@@ -50,11 +50,15 @@ class MainActivity : AppCompatActivity() {
     private val openDocumentTree =
         registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
             if (uri != null) {
+                contentResolver.takePersistableUriPermission(
+                    uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                            Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                )
                 viewModel.setMusicDirectory(uri)
             }
         }
 
-    @OptIn(ExperimentalAnimationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -66,19 +70,23 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        startService(Intent(this@MainActivity, DownloadService::class.java))
+    }
+
     @Composable
     private fun Content() {
         MaterialTheme(
             colors = darkColors(primary = Color.Cyan)
         ) {
+            val service by rememberService<DownloadService>()
+
             LaunchedEffect(true) {
-                startService(Intent(this@MainActivity, DownloadService::class.java))
                 viewModel.selectDirectory.onEach {
-                    openDocumentTree.launch(null)
+                    openDocumentTree.launch(it)
                 }.launchIn(this)
             }
-
-            val service by rememberService<DownloadService>()
 
             LaunchedEffect(service) {
                 service?.error?.onEach {
