@@ -17,8 +17,8 @@ inline fun <reified S : Service> rememberService(): State<S?> {
     val serviceState = remember { mutableStateOf<S?>(null) }
     val context = LocalContext.current
 
-    DisposableEffect(true) {
-        val serviceConnection = object : ServiceConnection {
+    val serviceConnection = remember {
+        object : ServiceConnection {
 
             @Suppress("unchecked_cast")
             override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
@@ -30,13 +30,19 @@ inline fun <reified S : Service> rememberService(): State<S?> {
                 serviceState.value = null
             }
         }
+    }
 
-        context.bindService(
-            Intent(context, S::class.java),
-            serviceConnection,
-            Context.BIND_IMPORTANT
-        )
+    if (serviceState.value == null) {
+        SideEffect {
+            context.bindService(
+                Intent(context, S::class.java),
+                serviceConnection,
+                Context.BIND_IMPORTANT
+            )
+        }
+    }
 
+    DisposableEffect(true) {
         onDispose {
             context.unbindService(serviceConnection)
             serviceState.value = null

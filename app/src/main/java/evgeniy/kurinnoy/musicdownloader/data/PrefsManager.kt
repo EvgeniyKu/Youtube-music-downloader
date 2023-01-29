@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStoreFile
 import dagger.hilt.android.qualifiers.ApplicationContext
+import evgeniy.kurinnoy.musicdownloader.domain.exceptions.DiskAccessException
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -20,6 +21,11 @@ class PrefsManager @Inject constructor(
     private val dataStore = PreferenceDataStoreFactory.create(
         produceFile = { context.preferencesDataStoreFile(FILE_NAME) }
     )
+
+    suspend fun requireMusicDirectory(): Uri {
+        return getMusicDirectory()
+            ?: throw DiskAccessException("music folder not found")
+    }
 
     suspend fun getMusicDirectory(): Uri? {
         val uriString = dataStore.data.first()[musicDirectoryKey]

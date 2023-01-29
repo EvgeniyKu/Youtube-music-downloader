@@ -64,8 +64,8 @@ class DownloadService: Service() {
         downloadManager.downloadBestAudioFromYoutube(scope, youtubeUrl)
     }
 
-    fun tryAgain(info: MusicDownloadingState.Failure) {
-        downloadManager.downloadFromYoutube(scope, info.url, info.info.musicInfo, info.info.selectedFormat)
+    fun tryAgain(info: MusicDownloadingState.InfoState) {
+        downloadManager.downloadFromYoutube(scope, info.id, info.info.musicInfo, info.info.selectedFormat)
     }
 
     fun cancel(id: String) {

@@ -113,6 +113,13 @@ class ServiceNotificationManager(
                     .setSmallIcon(android.R.drawable.stat_sys_warning)
                     .setDeleteIntent(createDeletePendingIntent(state.url))
             }
+            is MusicDownloadingState.AlreadyExist -> {
+                builder
+                    .setContentTitle("Song already downloaded")
+                    .setContentText("${state.info.musicInfo.artist}: ${state.info.musicInfo.title}")
+                    .setSmallIcon(android.R.drawable.stat_sys_warning)
+                    .setDeleteIntent(createDeletePendingIntent(state.url))
+            }
             is MusicDownloadingState.InProgress -> {
                 builder
                     .setContentText("${state.info.musicInfo.artist}: ${state.info.musicInfo.title}")

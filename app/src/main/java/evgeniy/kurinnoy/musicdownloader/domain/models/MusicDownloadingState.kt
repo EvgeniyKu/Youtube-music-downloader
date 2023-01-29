@@ -12,6 +12,11 @@ sealed class MusicDownloadingState(
         abstract val info: MusicDownloadingInfo
     }
 
+    data class AlreadyExist(
+        override val info: MusicDownloadingInfo,
+        val url: String,
+    ) : InfoState(url)
+
     data class InProgress(
         override val info: MusicDownloadingInfo,
         val progress: Float,
@@ -37,6 +42,7 @@ sealed class MusicDownloadingState(
                     is Completed -> "Successfully downloaded $shortInfo"
                     is Failure -> "Failed to download $shortInfo. Error: $throwable\n${throwable.stackTraceToString()}"
                     is InProgress -> "Progress $progress $shortInfo"
+                    is AlreadyExist -> "Already exist: $shortInfo"
                 }
             }
             is Pending -> "Pending: $url"

@@ -141,7 +141,7 @@ class MainActivity : AppCompatActivity() {
 private fun MainScreen(
     downloadingFiles: State<List<MusicDownloadingState>>,
     onDownloadClick: (String) -> Unit,
-    onRestart: (info: MusicDownloadingState.Failure) -> Unit,
+    onRestart: (info: MusicDownloadingState.InfoState) -> Unit,
     onCancel: (state: MusicDownloadingState) -> Unit,
     onChangeFolder: () -> Unit
 ) {
@@ -195,6 +195,47 @@ private fun MainScreen(
             }
         }
 
+        var showAlreadyExistDialog by remember {
+            mutableStateOf<MusicDownloadingState.AlreadyExist?>(null)
+        }
+        val dialogModel = showAlreadyExistDialog
+        if (dialogModel != null) {
+            AlertDialog(
+                onDismissRequest = { showAlreadyExistDialog = null },
+                title = {
+                    Text(text = "Song already downloaded")
+                },
+                text = {
+                    val songFullName = "${dialogModel.info.musicInfo.artist}: ${dialogModel.info.musicInfo.title}"
+                    Text(text = "Song $songFullName already downloaded. Do you want download it again?")
+                },
+                buttons = {
+                    Row(
+                        modifier = Modifier.padding(4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = {
+                                onRestart(dialogModel)
+                                showAlreadyExistDialog = null
+                            },
+                            content = {
+                                Text(text = "download again")
+                            }
+                        )
+                        Button(
+                            onClick = {
+                                onCancel(dialogModel)
+                                showAlreadyExistDialog = null
+                            },
+                            content = {
+                                Text(text = "remove")
+                            }
+                        )
+                    }
+                }
+            )
+        }
         DownloadingList(
             modifier = Modifier
                 .padding(horizontal = 24.dp)
@@ -204,6 +245,8 @@ private fun MainScreen(
             onClick = {
                 if (it is MusicDownloadingState.Failure) {
                     onRestart(it)
+                } else if (it is MusicDownloadingState.AlreadyExist) {
+                    showAlreadyExistDialog = it
                 }
             },
             onCancel = onCancel
@@ -253,6 +296,12 @@ private fun SongRow(
                 painter = painterResource(id = R.drawable.ic_success),
                 contentDescription = null,
                 tint = MaterialTheme.colors.primary
+            )
+            is MusicDownloadingState.AlreadyExist -> Icon(
+                modifier = Modifier.size(40.dp),
+                painter = painterResource(id = R.drawable.ic_warning),
+                contentDescription = null,
+                tint = MaterialTheme.colors.secondary
             )
             is MusicDownloadingState.Failure -> Icon(
                 modifier = Modifier.size(40.dp),
@@ -369,6 +418,11 @@ private fun MainPreview() {
         url = "youtube.com/Jhgjbjj35"
     )
 
+    val stateExist = MusicDownloadingState.AlreadyExist(
+        info = info.copy(),
+        url = "youtube.com/Jhgjbjj35"
+    )
+
     val stateError = MusicDownloadingState.Failure(
         info = info.copy(),
         url = "youtube.com/Jhgjbjj35",
@@ -381,6 +435,7 @@ private fun MainPreview() {
                 MusicDownloadingState.Pending("some_url.com"),
                 state,
                 stateSuccess,
+                stateExist,
                 stateError
             )
         )

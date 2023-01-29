@@ -1,9 +1,12 @@
 package evgeniy.kurinnoy.musicdownloader.data
 
 import android.content.Context
+import android.net.Uri
 import android.util.Range
+import androidx.documentfile.provider.DocumentFile
 import dagger.hilt.android.qualifiers.ApplicationContext
 import evgeniy.kurinnoy.musicdownloader.data.models.DownloadableFile
+import evgeniy.kurinnoy.musicdownloader.utils.extension.copyTo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -11,6 +14,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
 import java.io.File
+import java.io.IOException
 import java.net.URL
 import javax.inject.Inject
 
@@ -82,6 +86,26 @@ class FileManager @Inject constructor(
         progressCollector(100F)
         return file
 
+    }
+
+    fun copyFileToExternalStorage(internalFile: File, externalDirectory: Uri) {
+        val outputDirectory = openExternalDirectory(externalDirectory)
+
+        val outputFile =
+            outputDirectory.createFile("application/octet-stream", internalFile.name)
+                ?: throw IOException("Failed to create file")
+
+        internalFile.copyTo(context, outputFile)
+    }
+
+    fun isExistInExternalDirectory(externalDirectory: Uri, fileName: String): Boolean {
+        return openExternalDirectory(externalDirectory).findFile(fileName) != null
+    }
+
+    private fun openExternalDirectory(uri: Uri): DocumentFile {
+        return DocumentFile.fromTreeUri(context, uri)
+            ?.takeIf { it.exists() && it.canWrite() }
+            ?: throw IOException("Failed to open the directory $uri")
     }
 
     private fun createTempFile(fileName: String): File {

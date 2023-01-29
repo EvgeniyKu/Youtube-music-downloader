@@ -1,10 +1,5 @@
 package evgeniy.kurinnoy.musicdownloader.domain
 
-import android.content.Context
-import android.net.Uri
-import android.util.Log
-import androidx.documentfile.provider.DocumentFile
-import dagger.hilt.android.qualifiers.ApplicationContext
 import evgeniy.kurinnoy.musicdownloader.data.FileManager
 import evgeniy.kurinnoy.musicdownloader.data.MusicDataProvider
 import evgeniy.kurinnoy.musicdownloader.data.PrefsManager
@@ -13,20 +8,15 @@ import evgeniy.kurinnoy.musicdownloader.data.models.MusicInfo
 import evgeniy.kurinnoy.musicdownloader.domain.exceptions.DiskAccessException
 import evgeniy.kurinnoy.musicdownloader.domain.models.MusicDownloadingInfo
 import evgeniy.kurinnoy.musicdownloader.domain.models.MusicDownloadingState
-import evgeniy.kurinnoy.musicdownloader.utils.extension.copyTo
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import java.io.File
-import java.io.IOException
 import java.util.*
 import javax.inject.Inject
 import kotlin.coroutines.coroutineContext
 
 class MusicDownloadManager @Inject constructor(
-    @ApplicationContext
-    private val context: Context,
     private val prefsManager: PrefsManager,
     private val fileManager: FileManager,
     private val musicDataProvider: MusicDataProvider,
@@ -53,9 +43,14 @@ class MusicDownloadManager @Inject constructor(
                 removeState(url)
                 throw t
             }
-            val audioFormat = musicInfo.bestFormat
-
-            downloadFromYoutubeInternal(url, musicInfo, audioFormat)
+            val downloadingInfo = MusicDownloadingInfo(musicInfo, musicInfo.bestFormat)
+            if (downloadingInfo.isAlreadyDownloaded()) {
+                updateState(url) {
+                    MusicDownloadingState.AlreadyExist(downloadingInfo, url)
+                }
+            } else {
+                downloadFromYoutubeInternal(url, downloadingInfo)
+            }
         }
     }
 
@@ -66,18 +61,17 @@ class MusicDownloadManager @Inject constructor(
         audioFormat: MusicInfo.AudioFormat,
     ) {
         downloadingJobs[url] = scope.launch {
-            downloadFromYoutubeInternal(url, musicInfo, audioFormat)
+            val downloadingInfo = MusicDownloadingInfo(musicInfo, audioFormat)
+            downloadFromYoutubeInternal(url, downloadingInfo)
         }
     }
 
     @Throws(DiskAccessException::class)
     private suspend fun downloadFromYoutubeInternal(
         url: String,
-        musicInfo: MusicInfo,
-        audioFormat: MusicInfo.AudioFormat,
+        downloadingInfo: MusicDownloadingInfo,
     ) {
 
-        val downloadingInfo = MusicDownloadingInfo(musicInfo, audioFormat)
         updateState(url) {
             MusicDownloadingState.InProgress(
                 downloadingInfo,
@@ -141,6 +135,13 @@ class MusicDownloadManager @Inject constructor(
         }
     }
 
+    private suspend fun MusicDownloadingInfo.isAlreadyDownloaded(): Boolean {
+        return fileManager.isExistInExternalDirectory(
+            externalDirectory = prefsManager.requireMusicDirectory(),
+            fileName = createMusicFileName()
+        )
+    }
+
     private val SharedFlow<List<MusicDownloadingState>>.value: List<MusicDownloadingState>
         get() = replayCache.lastOrNull() ?: emptyList()
 
@@ -151,20 +152,21 @@ class MusicDownloadManager @Inject constructor(
 
         suspend fun downloadMusic() {
             try {
-                val musicFolder = prefsManager.getMusicDirectory()
-                    ?: throw DiskAccessException("music folder not found")
+                val musicFolder = prefsManager.requireMusicDirectory()
 
                 val progressFlow = fileManager.downloadFile(
                     url = downloadingInfo.selectedFormat.downloadUrl,
-                    fileName = getSongFileName(),
+                    fileName = downloadingInfo.createMusicFileName(),
                 )
 
                 progressFlow.collectLatest { downloadableFile ->
                     when (downloadableFile) {
-                        is DownloadableFile.Progress -> updateProgress(url,
-                            downloadableFile.progress)
+                        is DownloadableFile.Progress -> updateProgress(
+                            url = url,
+                            progress = downloadableFile.progress
+                        )
                         is DownloadableFile.Complete -> {
-                            copyFileToExternalStorage(downloadableFile.file, musicFolder)
+                            fileManager.copyFileToExternalStorage(downloadableFile.file, musicFolder)
                             updateState(url) {
                                 MusicDownloadingState.Completed(downloadingInfo, url)
                             }
@@ -177,23 +179,6 @@ class MusicDownloadManager @Inject constructor(
                     MusicDownloadingState.Failure(downloadingInfo, t, url)
                 }
             }
-        }
-
-        private fun copyFileToExternalStorage(internalFile: File, externalDirectory: Uri) {
-
-            val outputDirectory = DocumentFile.fromTreeUri(context, externalDirectory)
-                ?.takeIf { it.exists() && it.canWrite() }
-                ?: throw IOException("Failed to open the directory $externalDirectory")
-
-            val outputFile =
-                outputDirectory.createFile("application/octet-stream", internalFile.name)
-                    ?: throw IOException("Failed to create file")
-
-            internalFile.copyTo(context, outputFile)
-        }
-
-        private fun getSongFileName(): String {
-            return downloadingInfo.musicInfo.artist + ": " + downloadingInfo.musicInfo.title + "." + downloadingInfo.selectedFormat.extension
         }
     }
 }

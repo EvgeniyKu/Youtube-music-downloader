@@ -11,7 +11,7 @@ class MusicInfoMapper @Inject constructor(
     fun mapFrom(videoInfo: VideoInfo): MusicInfo {
         return MusicInfo(
             title = videoInfo.details().title(),
-            artist = videoInfo.details().author(),
+            artist = videoInfo.details().author().removeSuffix(" - Topic"),
             formats = videoInfo.audioFormats().map { format ->
                 audioFormatMapper.mapFrom(format)
             }
