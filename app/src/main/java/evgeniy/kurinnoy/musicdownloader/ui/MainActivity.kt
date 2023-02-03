@@ -1,6 +1,8 @@
 package evgeniy.kurinnoy.musicdownloader.ui
 
+import android.Manifest
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.compose.setContent
@@ -38,7 +40,10 @@ import evgeniy.kurinnoy.musicdownloader.data.models.MusicInfo
 import evgeniy.kurinnoy.musicdownloader.domain.models.MusicDownloadingInfo
 import evgeniy.kurinnoy.musicdownloader.domain.models.MusicDownloadingState
 import evgeniy.kurinnoy.musicdownloader.ui.service.DownloadService
+import evgeniy.kurinnoy.musicdownloader.utils.rememberPermissionState
 import evgeniy.kurinnoy.musicdownloader.utils.rememberService
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
@@ -81,8 +86,16 @@ class MainActivity : AppCompatActivity() {
             colors = darkColors(primary = Color.Cyan)
         ) {
             val service by rememberService<DownloadService>()
+            val permissionState = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                rememberPermissionState(permission = Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                null
+            }
 
             LaunchedEffect(true) {
+                if (permissionState?.hasPermission == false) {
+                    permissionState.requestPermission()
+                }
                 viewModel.selectDirectory.onEach {
                     openDocumentTree.launch(it)
                 }.launchIn(this)
